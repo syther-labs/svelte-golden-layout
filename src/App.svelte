@@ -1,12 +1,20 @@
 <script lang="ts">
-	import { writable, Writable } from 'svelte/store';
+	import { writable, type Writable } from 'svelte/store';
 	import { propertyStore } from 'svelte-writable-derived';
 
-	import type { LayoutConfig, ResolvedLayoutConfig, VirtualLayout } from 'golden-layout';
-	import '../lib/css/themes/goldenlayout-light-theme.css';
+	import {
+		ComponentItemConfig,
+		LayoutConfig,
+		LayoutManager,
+		ResolvedLayoutConfig,
+		RowOrColumnItemConfig,
+		VirtualLayout,
+	} from 'golden-layout';
+	import './lib/css/themes/goldenlayout-light-theme.css';
 
-	import GoldenLayout from '../lib';
-	import Test from './_Test.svelte';
+	import GoldenLayout from './lib';
+	import MainArea from './routes/MainArea.svelte';
+	import XAxis from './routes/XAxis.svelte';
 
 	const names = ['foo', 'bar', 'baz'];
 	const files = writable<{ [name: string]: string }>({
@@ -20,9 +28,9 @@
 	}
 
 	let display = true;
-	let rows = 4;
+	let rows = 2;
 
-	const components = { Test };
+	const components = { MainArea, XAxis };
 
 	let layout: LayoutConfig;
 	let saved: ResolvedLayoutConfig = undefined;
@@ -38,7 +46,7 @@
 				return {
 					type: 'component',
 					title: name,
-					componentType: 'Test',
+					componentType: 'MainArea',
 					componentState: {
 						name,
 						file: propertyStore(files, name),
@@ -55,6 +63,36 @@
 	function handleRestore() {
 		layout = saved as unknown as LayoutConfig;
 	}
+
+	function addChart() {
+		const name = Math.random();
+
+		const mainItem = {
+			type: 'component',
+			componentType: 'MainArea',
+			componentState: {
+				name,
+				file: propertyStore(files, name),
+			},
+		} as ComponentItemConfig;
+
+		const xAxis = {
+			type: 'component',
+			componentType: 'XAxis',
+			isClosable: false,
+			reorderEnabled: false,
+			componentState: {
+				id: 1,
+			},
+		} as ComponentItemConfig;
+
+		const chartItem: RowOrColumnItemConfig = {
+			type: 'column',
+			content: [mainItem, xAxis],
+		};
+
+		goldenLayout.addItemAtLocation(chartItem, [{ typeId: 7 }]);
+	}
 </script>
 
 <main>
@@ -63,6 +101,7 @@
 		<p>
 			<input type="checkbox" bind:checked={display} /> display
 			<input type="number" min="0" max="10" bind:value={rows} /> columns
+			<button on:click={addChart}>Add Chart</button>
 			<button on:click={handleSave}>Save Layout</button>
 			<button on:click={handleRestore} disabled={saved === undefined}>Restore Layout</button>
 		</p>

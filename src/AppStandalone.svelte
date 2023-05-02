@@ -113,6 +113,7 @@
 				(_i, it) => (it.isRow || it.isColumn) && it.contentItems.length == 1,
 				startNode,
 			) ?? startNode;
+
 		console.log(startNode.id);
 		const newEl = newElConfig();
 		(containerItem as RowOrColumn).addItem({

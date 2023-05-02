@@ -8,7 +8,7 @@
 	} from 'golden-layout';
 	import 'golden-layout/dist/css/goldenlayout-base.css';
 	import 'golden-layout/dist/css/themes/goldenlayout-dark-theme.css';
-	import XAxis from './routes/XAxis.svelte';
+	import XAxis from './components/XAxis.svelte';
 
 	let container: HTMLDivElement;
 	let myLayout: GoldenLayout;

@@ -24,22 +24,22 @@
 					{
 						...newElConfig(),
 					},
-					{
-						type: 'column',
-						content: [
-							{
-								...newElConfig(),
-							},
-							{
-								type: 'row',
-								content: [
-									{
-										...newElConfig(),
-									},
-								],
-							},
-						],
-					},
+					// {
+					// 	type: 'column',
+					// 	content: [
+					// 		{
+					// 			...newElConfig(),
+					// 		},
+					// 		{
+					// 			type: 'row',
+					// 			content: [
+					// 				{
+					// 					...newElConfig(),
+					// 				},
+					// 			],
+					// 		},
+					// 	],
+					// },
 				],
 			},
 		};
@@ -99,34 +99,27 @@
 		return undefined;
 	}
 
-	let isVSplit = true;
 	function addComponent() {
-		const ty = isVSplit ? 'row' : 'column';
-		console.log(ty);
+		// find the point from which to add
+		let startNode = myLayout.rootItem as RowOrColumn;
+		if (myLayout.focusedComponentItem) {
+			const result = findClosestParent((i) => i.isRow || i.isColumn, myLayout.focusedComponentItem);
+			if (result) startNode = result as RowOrColumn;
+		}
 
-		const newRowConfig: RowOrColumnItemConfig = {
-			type: ty,
-			content: [
-				{
-					...newElConfig(),
-				},
-			],
-		};
-
-		const typeId = isVSplit ? 4 : 5;
-
-    // find the point from which to add
-    let startNode = myLayout.rootItem;
-    if (myLayout.focusedComponentItem) 
-      startNode = findClosestParent(i => i.isRow || i.isColumn, myLayout.focusedComponentItem) ?? myLayout.rootItem;
-
-		(startNode as RowOrColumn).addItem(newRowConfig);
-
-		// myLayout.focusComponent();
-		// myLayout.addItemAtLocation(newRowConfig, [
-		// (myLayout.rootItem as RowOrColumn).addItem(newRowConfig);
-
-		isVSplit = !isVSplit;
+		// find the node after to insert
+		const containerItem =
+			findClosestChildren(
+				(_i, it) => (it.isRow || it.isColumn) && it.contentItems.length == 1,
+				startNode,
+			) ?? startNode;
+		console.log(startNode.id);
+		const newEl = newElConfig();
+		(containerItem as RowOrColumn).addItem({
+			type: containerItem.isRow ? 'column' : 'row',
+      id: String(id - 1),
+			content: [newEl],
+		});
 	}
 </script>
 

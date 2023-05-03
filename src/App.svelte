@@ -1,13 +1,10 @@
 <script lang="ts">
-	import {
-		LayoutConfig,
-		ResolvedLayoutConfig,
-		VirtualLayout,
-	} from 'golden-layout';
+	import { ComponentItemConfig, LayoutConfig, ResolvedLayoutConfig, VirtualLayout } from 'golden-layout';
 	import './lib/css/themes/goldenlayout-light-theme.css';
 
 	import GoldenLayout from './lib';
 	import Chart from './components/Chart.svelte';
+	import { spawnWithBinaryPartitioning } from './MainLayout';
 
 	let display = true;
 	let rows = 2;
@@ -46,19 +43,19 @@
 
 	function addChart() {
 		chartCount = chartCount + 1;
-		goldenLayout.addItemAtLocation(
-			{
-        title: String(chartCount),
-				type: 'component',
-				componentType: 'Chart',
-				// isClosable: false,
-				// reorderEnabled: false,
-				componentState: {
-					chartId: chartCount,
-				},
+    const config = {
+			title: String(chartCount),
+			type: 'component',
+			componentType: 'Chart',
+			// isClosable: false,
+			// reorderEnabled: false,
+			componentState: {
+				chartId: chartCount,
 			},
-			[{ typeId: 7 }],
-		);
+		} as ComponentItemConfig;
+
+		spawnWithBinaryPartitioning(goldenLayout, config);
+		// goldenLayout.addItemAtLocation(config, [{ typeId: 7 }]);
 	}
 </script>
 

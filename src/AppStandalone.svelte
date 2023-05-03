@@ -3,15 +3,12 @@
 	import {
 		type LayoutConfig,
 		GoldenLayout,
-		RowOrColumn,
 		ComponentItemConfig,
-		ContentItem,
-		Stack,
-		ComponentItem,
 	} from 'golden-layout';
 	import 'golden-layout/dist/css/goldenlayout-base.css';
 	import 'golden-layout/dist/css/themes/goldenlayout-dark-theme.css';
 	import XAxis from './components/XAxis.svelte';
+	import { spawnWithBinaryPartitioning } from './MainLayout';
 
 	let container: HTMLDivElement;
 	let myLayout: GoldenLayout;
@@ -68,68 +65,8 @@
 		};
 	}
 
-	function findNearestAncestor(
-		predicate: (item: ContentItem) => boolean,
-		start: ContentItem,
-	): ContentItem | undefined {
-		let current = start;
-		while (current) {
-			if (predicate(current)) return current;
-			else current = current.parent;
-		}
-	}
-
-	function findNearestDescendants(
-		predicate: (item: ContentItem) => boolean,
-		start: ContentItem,
-	): ContentItem | undefined {
-		// Check the current item
-		if (predicate(start)) {
-			return start;
-		}
-
-		// Iterate through all children
-		for (const child of start.contentItems) {
-			const foundChild = findNearestDescendants(predicate, child);
-			if (foundChild) return foundChild;
-		}
-
-		// No matching child found
-		return undefined;
-	}
-
-	function binarySplitAt(component: ComponentItem): RowOrColumn {
-		const stack = findNearestAncestor((it) => it.isStack, component) as Stack;
-		const stackParent = stack.parent as RowOrColumn;
-		const stackIndex = stackParent.contentItems.findIndex((i) => i == stack);
-
-		// split the item stack into a container and a stack
-		const newRowColumnContainer = stackParent.newItem(
-			{
-				type: stackParent.isRow ? 'column' : 'row',
-				content: [],
-			},
-			stackIndex,
-		) as RowOrColumn;
-
-		// add the stack first
-		stackParent.removeChild(stack, true);
-		newRowColumnContainer.addChild(stack, 0);
-
-		return newRowColumnContainer;
-	}
-
-	function freeSlot(item: ContentItem): RowOrColumn {
-		return findNearestDescendants((it) => it.isRow || it.isColumn, item) as RowOrColumn;
-	}
-
 	function addComponent() {
-		const container = myLayout.focusedComponentItem
-			? binarySplitAt(myLayout.focusedComponentItem)
-			: freeSlot(myLayout.rootItem);
-		const newEl = newElConfig();
-		const idx = container.addItem(newEl);
-		myLayout.focusComponent(container.contentItems[idx].contentItems[0] as ComponentItem);
+		spawnWithBinaryPartitioning(myLayout, newElConfig());
 	}
 </script>
 

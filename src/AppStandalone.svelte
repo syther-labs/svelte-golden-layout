@@ -22,22 +22,6 @@
 					{
 						...newElConfig(),
 					},
-					// {
-					// 	type: 'column',
-					// 	content: [
-					// 		{
-					// 			...newElConfig(),
-					// 		},
-					// 		{
-					// 			type: 'row',
-					// 			content: [
-					// 				{
-					// 					...newElConfig(),
-					// 				},
-					// 			],
-					// 		},
-					// 	],
-					// },
 				],
 			},
 		};

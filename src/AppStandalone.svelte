@@ -3,10 +3,11 @@
 	import {
 		type LayoutConfig,
 		GoldenLayout,
-		RowOrColumnItemConfig,
 		RowOrColumn,
 		ComponentItemConfig,
 		ContentItem,
+		Stack,
+		ComponentItem,
 	} from 'golden-layout';
 	import 'golden-layout/dist/css/goldenlayout-base.css';
 	import 'golden-layout/dist/css/themes/goldenlayout-dark-theme.css';
@@ -59,12 +60,15 @@
 		return {
 			title: String(_id),
 			type: 'component',
+			header: {
+				popout: false,
+			},
 			componentType: 'myComponent',
 			componentState: { id: _id },
 		};
 	}
 
-	function findClosestParent(
+	function findNearestAncestor(
 		predicate: (item: ContentItem) => boolean,
 		start: ContentItem,
 	): ContentItem | undefined {
@@ -75,52 +79,57 @@
 		}
 	}
 
-	function findClosestChildren(
-		predicate: (index: number, item: ContentItem) => boolean,
-		start: ContentItem = myLayout.rootItem,
+	function findNearestDescendants(
+		predicate: (item: ContentItem) => boolean,
+		start: ContentItem,
 	): ContentItem | undefined {
-		// First iterate through all children from last to first
-		for (let i = start.contentItems.length - 1; i >= 0; i--) {
-			const child = start.contentItems[i];
-			if (predicate(i, child)) {
-				return child;
-			}
+		// Check the current item
+		if (predicate(start)) {
+			return start;
 		}
 
-		// If not matched, then dive deeper from last to first
-		for (let i = start.contentItems.length - 1; i >= 0; i--) {
-			const child = start.contentItems[i];
-			const result = findClosestChildren(predicate, child);
-			if (result) {
-				return result;
-			}
+		// Iterate through all children
+		for (const child of start.contentItems) {
+			const foundChild = findNearestDescendants(predicate, child);
+			if (foundChild) return foundChild;
 		}
 
+		// No matching child found
 		return undefined;
 	}
 
+	function binarySplitAt(component: ComponentItem): RowOrColumn {
+		const stack = findNearestAncestor((it) => it.isStack, component) as Stack;
+		const stackParent = stack.parent as RowOrColumn;
+		const stackIndex = stackParent.contentItems.findIndex((i) => i == stack);
+
+		// split the item stack into a container and a stack
+		const newRowColumnContainer = stackParent.newItem(
+			{
+				type: stackParent.isRow ? 'column' : 'row',
+				content: [],
+			},
+			stackIndex,
+		) as RowOrColumn;
+
+		// add the stack first
+		stackParent.removeChild(stack, true);
+		newRowColumnContainer.addChild(stack, 0);
+
+		return newRowColumnContainer;
+	}
+
+	function freeSlot(item: ContentItem): RowOrColumn {
+		return findNearestDescendants((it) => it.isRow || it.isColumn, item) as RowOrColumn;
+	}
+
 	function addComponent() {
-		// find the point from which to add
-		let startNode = myLayout.rootItem as RowOrColumn;
-		if (myLayout.focusedComponentItem) {
-			const result = findClosestParent((i) => i.isRow || i.isColumn, myLayout.focusedComponentItem);
-			if (result) startNode = result as RowOrColumn;
-		}
-
-		// find the node after to insert
-		const containerItem =
-			findClosestChildren(
-				(_i, it) => (it.isRow || it.isColumn) && it.contentItems.length == 1,
-				startNode,
-			) ?? startNode;
-
-		console.log(startNode.id);
+		const container = myLayout.focusedComponentItem
+			? binarySplitAt(myLayout.focusedComponentItem)
+			: freeSlot(myLayout.rootItem);
 		const newEl = newElConfig();
-		(containerItem as RowOrColumn).addItem({
-			type: containerItem.isRow ? 'column' : 'row',
-      id: String(id - 1),
-			content: [newEl],
-		});
+		const idx = container.addItem(newEl);
+		myLayout.focusComponent(container.contentItems[idx].contentItems[0] as ComponentItem);
 	}
 </script>
 
